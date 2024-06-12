@@ -21,7 +21,10 @@ const getRandomBoard = () => {
 
 export const DataProvider = ({ children }) => {
     const socket = useMemo(
-        () => io.connect("http://localhost:3000", { autoConnect: false }),
+        () =>
+            io.connect("https://real-time-bingo.onrender.com/", {
+                autoConnect: false,
+            }),
         [],
     );
     const [myBoard, setMyBoard] = useState(getRandomBoard());
