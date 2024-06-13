@@ -3,13 +3,14 @@ import React, { useEffect, useRef, useState } from "react";
 import { useData } from "./DataContext";
 import smile from "/smile.svg";
 import cry from "/cry.svg";
+import { act } from "react";
 
 export default function Board() {
     return (
         <div className=" w-full cursor-pointer sm:self-start ">
             <div className=" grid  w-full justify-center gap-2">
                 <PlayerBoard />
-                <div className="relative m-auto p-2 grid w-fit gap-2">
+                <div className="relative m-auto grid w-fit gap-2 p-2">
                     <BingoLine />
                     <MyBoard />
                 </div>
@@ -19,7 +20,7 @@ export default function Board() {
     );
 }
 
-const PlayStatus = ({ className,status,svgProp=null }) => {
+const PlayStatus = ({ className, status, svgProp = null }) => {
     return (
         <div className={className}>
             <p>{status}</p>
@@ -28,16 +29,9 @@ const PlayStatus = ({ className,status,svgProp=null }) => {
     );
 };
 const PlayerBoard = () => {
-    const { active, myLines, oppLines } = useData();
-    const [timelineKey, setTimelineKey] = useState(0);
-    const timelineRef = useRef();
-
-    useEffect(() => {
-        setTimelineKey(timelineKey + 1);
-    }, [active]);
+    const { active, myLines,remountLoader, oppLines } = useData();
 
     let flag = "continue";
-
     if (myLines == 5) {
         if (oppLines == 5) flag = "draw";
         else flag = "win";
@@ -75,7 +69,7 @@ const PlayerBoard = () => {
 
             <PlayStatus
                 className={clsx(
-                    "absolute flex left-1/2 -translate-x-1/2 items-center gap-2",
+                    "absolute left-1/2 flex -translate-x-1/2 items-center gap-2",
                     flag == "draw"
                         ? "top-1/2  -translate-y-1/2 opacity-100"
                         : "-top-1/2 opacity-0",
@@ -98,8 +92,7 @@ const PlayerBoard = () => {
                 {myLines < 5 && (
                     <div className="*:absolute *:-bottom-2  *:left-0  *:w-full *:rounded-3xl">
                         <div
-                            key={timelineKey}
-                            ref={timelineRef}
+                            key={remountLoader}
                             className="timeout z-10 h-[8px] translate-y-[1px]  bg-white"
                         ></div>
                         <div className="h-[6px] bg-matte"></div>
@@ -127,7 +120,8 @@ const OppCell = ({ num }) => {
                 "h-3 w-3 rounded-sm",
                 num < 0 ? "bg-white" : "bg-white/20",
             )}
-        ></li>
+        >
+        </li>
     );
 };
 const BingoLine = () => {
@@ -154,6 +148,7 @@ const BingoLine = () => {
 
 const MyBoard = () => {
     const { myBoard, myLines, oppLines, active } = useData();
+
     return (
         <ul
             className={clsx(
@@ -168,17 +163,19 @@ const MyBoard = () => {
         </ul>
     );
 };
-const Cell = ({ num }) => {
-    const { markClicked, myLines, oppLines, active } = useData();
+const Cell = ({ num, checked, handleChecked }) => {
+    const { userClicked, myLines, oppLines, active } = useData();
 
     return (
         <li
-            onClick={() => {
-                if (!active || myLines == 5 || oppLines == 5) return;
-                if (num > 0) markClicked(num);
+            onClick={(e) => {
+                if (num<0 || !active || myLines == 5 || oppLines == 5) {
+                    return;
+                }
+                userClicked(num);
             }}
             className={clsx(
-                "grid h-16 w-16 sm:h-20 sm:w-20 place-items-center border border-matte bg-black text-lg font-bold ",
+                "grid h-16 w-16  place-items-center border border-matte bg-black text-lg font-bold sm:h-20 sm:w-20 ",
                 num < 0
                     ? num < -26
                         ? "bg-white text-black blur-sm"

@@ -23,21 +23,23 @@ export const DataProvider = ({ children }) => {
     const socket = useMemo(
         () =>
             io.connect("https://real-time-bingo.onrender.com/", {
+            // io.connect("http://localhost:3000", {
                 autoConnect: false,
             }),
         [],
     );
     const [myBoard, setMyBoard] = useState(getRandomBoard());
-    const [oppBoard, setOppBoard] = useState([]);
+    const [oppBoard, setOppBoard] = useState(new Array(25).fill(0));
     const [gameState, setGameState] = useState("home");
-    const [active, setActive] = useState(0);
+    const [active, setActive] = useState(false);
     const [myLines, setMyLines] = useState(0);
     const [oppLines, setOppLines] = useState(0);
-
+    const [remountLoader,setRemountLoader] = useState(0); // just for toggling
     let countdown = null;
+
     const resetGame = () => {
         setMyBoard(getRandomBoard());
-        setOppBoard([]);
+        setOppBoard(new Array(25).fill(0));
         setGameState("home");
         setActive(false);
         setMyLines(0);
@@ -45,22 +47,29 @@ export const DataProvider = ({ children }) => {
         clearInterval(countdown);
     };
 
-     const joinRoom = () => {
-        socket.emit("join_room");
+    const joinRoom = () => {
+        setGameState("waiting");
+        socket.emit("join_room", myBoard);
     };
 
-    const startCountdown = () =>{
-
+    const startCountdown = () => {
         // also resets if previous timer is in action
-        if(countdown) clearInterval(countdown);
+        if (countdown) clearInterval(countdown);
         countdown = setInterval(() => {
             setActive((active) => !active);
+            setRemountLoader((remountLoader) => !remountLoader);
         }, 15000);
-    }
+    };
 
-    const checkLines = (board, player) => {
+    const updateBoard = (num, player) => {
+        let board;
+        if (player == 1) board = [...myBoard];
+        if (player == 2) board = [...oppBoard];
+
+        const boardIndex = board.findIndex((ele) => ele == num);
+        if (boardIndex !== -1) board[boardIndex] *= -1;
+
         let validLines = 0;
-
         const checkLine = (indices) => {
             const lineComplete = indices.every((index) => board[index] <= 0);
             if (lineComplete) {
@@ -81,63 +90,62 @@ export const DataProvider = ({ children }) => {
         checkLine([0, 6, 12, 18, 24]);
         checkLine([4, 8, 12, 16, 20]);
 
-        if (player === 1) setMyLines(validLines);
-        if (player === 2) setOppLines(validLines);
+        if (player === 1) {
+            setMyBoard(board);
+            setMyLines(validLines);
+        }
+        if (player === 2) {
+            setOppBoard(board);
+            setOppLines(validLines);
+        }
     };
-
-    const updateBoard = (board,num,player) =>{
-        const boardIndex = board.findIndex((ele) => ele == num);
-        const boardCpy = [...board];
-        if (boardIndex !== -1) boardCpy[boardIndex] *= -1;
-
-        checkLines(boardCpy, player);
-        if (player === 1) setMyBoard(boardCpy);
-        if (player === 2) setOppBoard(boardCpy);
-    }
     //this only executes at first render
     useEffect(() => {
         socket.connect();
 
         //when player 1 is waiting for player 2
-        socket.on("wait", () => {
+        socket.on("player 1", () => {
             setActive(true);
-            setGameState("waiting");
         });
 
         //if another player disconnects, this client resets
-        socket.on("leave_match", () => {
-            resetGame();
+        socket.on("leave_match", resetGame);
+
+        //start match and starts countdown
+        socket.on("start_match", () => {
+            setGameState("playing");
+            startCountdown();
         });
 
-        //executes when opponent send its board
+        socket.on("restart_countdown", () => {
+            startCountdown();
+            setRemountLoader((remountLoader) => !remountLoader);
+        });
+
         socket.on("set_opponent_board", (board) => {
             setOppBoard(board);
         });
-
-        socket.on("start_countdown",startCountdown);
 
         return () => {
             socket.disconnect();
         };
     }, []);
 
-    useEffect(()=>{
+    useEffect(() => {
         //updates board upon getting a number checked either by player 1 or player 2
-        socket.on("update_boards", (num) => {
-            setActive(!active);
-            startCountdown();
-            updateBoard(myBoard,num,1);
-            updateBoard(oppBoard,num,2);
+        socket.on("mark_number", (num) => {
+            markNumber(num);
         });
+    }, [myBoard,oppBoard,active]);
 
-        socket.on("start_match", () => {
-            socket.emit("opponent_board", myBoard);
-            setGameState("playing");
-        });
+    const markNumber = (num) => {
+        updateBoard(num, 1);
+        updateBoard(num, 2);
+        setActive(!active);
+    };
 
-    },[myBoard,oppBoard,active]);
-
-    const markClicked = (num) => {
+    const userClicked = (num) => {
+        markNumber(num);
         socket.emit("mark_number", num);
     };
 
@@ -149,10 +157,11 @@ export const DataProvider = ({ children }) => {
                 oppBoard,
                 gameState,
                 joinRoom,
-                markClicked,
+                userClicked,
                 myLines,
                 active,
                 oppLines,
+                remountLoader
             }}
         >
             {children}

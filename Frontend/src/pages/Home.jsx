@@ -9,7 +9,7 @@ export default function Home() {
     const {gameState,joinRoom} = useData();
     return (
         <div
-            className="relative overflow-hidden grid h-dvh place-items-center bg-black  text-white"
+            className="relative select-none overflow-hidden grid h-dvh place-items-center bg-black  text-white"
         >
             {gameState == "home" && (
                 <button

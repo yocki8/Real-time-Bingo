@@ -1,54 +1,43 @@
 const connectToSockets = (io) => {
+    let vacantRoom = null;
 
-    let currentRoom = null;
+    const delay = () => new Promise((resolve) => setTimeout(resolve, 1500));
 
     io.on("connection", (socket) => {
 
-        socket.on("disconnect", () => {
+
+        socket.on("disconnect", async() => {
+            await delay();
             socket.to(socket.room).emit("leave_match");
-            if(currentRoom==socket.room) currentRoom = null;
+            if (vacantRoom == socket.room) vacantRoom = null;
         });
-        
-        socket.on("mark_number",(num)=>
-        {
-            io.in(socket.room).emit("update_boards",num);
-        })
 
-        socket.on("opponent_board",(board)=>{
-            socket.to(socket.room).emit("set_opponent_board",board);
-        })
-        
-        socket.on("join_room", () => {
+        socket.on("mark_number", async (num) => {
+            await delay();
+            socket.to(socket.room).emit("mark_number", num);
+            io.in(socket.room).emit("restart_countdown");
+        });
 
-            if (currentRoom == null) {
-                currentRoom = crypto.randomUUID();
-
-                socket.join(currentRoom);
-                socket.room = currentRoom;
-                io.in(currentRoom).emit("wait");
-            } 
+        socket.on("join_room", async(board) => {
             
-            else {
-                socket.join(currentRoom);
-                socket.room = currentRoom;
-                io.in(currentRoom).emit("start_match");
-                io.in(currentRoom).emit("start_countdown");
+            await delay();
+            
+            if (vacantRoom == null) {
+                vacantRoom = { id: crypto.randomUUID(), board };
 
-                currentRoom = null;
+                socket.join(vacantRoom.id);
+                socket.room = vacantRoom.id;
+                io.in(vacantRoom.id).emit("player 1");
+            } else {
+                socket.join(vacantRoom.id);
+                socket.room = vacantRoom.id;
+                io.in(vacantRoom.id).emit("start_match");
+                io.in(socket.id).emit("set_opponent_board", vacantRoom.board);
+                socket.to(socket.room).emit("set_opponent_board", board);
+                vacantRoom = null;
             }
         });
     });
 };
 
 module.exports = connectToSockets;
-
-
-
-
-
-
-
-
-
-
-
