@@ -1,26 +1,27 @@
 const connectToSockets = (io) => {
     let vacantRoom = null;
 
+    // I am delaying intentionally to check if my app is prone to server respond delay
     const delay = () => new Promise((resolve) => setTimeout(resolve, 1500));
 
     io.on("connection", (socket) => {
 
 
         socket.on("disconnect", async() => {
-            await delay();
+            // await delay();
             socket.to(socket.room).emit("leave_match");
             if (vacantRoom == socket.room) vacantRoom = null;
         });
 
         socket.on("mark_number", async (num) => {
-            await delay();
+            // await delay();
             socket.to(socket.room).emit("mark_number", num);
             io.in(socket.room).emit("restart_countdown");
         });
 
         socket.on("join_room", async(board) => {
             
-            await delay();
+            // await delay();
             
             if (vacantRoom == null) {
                 vacantRoom = { id: crypto.randomUUID(), board };
