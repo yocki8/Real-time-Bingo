@@ -1,15 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useData } from "../components/DataContext";
-import clsx from "clsx";
+import { useData } from "./components/DataContext";
 import { ScaleLoader } from "react-spinners";
-import Board from "../components/Board";
+import Board from "./components/Board";
 
-export default function Home() {
+export default function App() {
 
     const {gameState,joinRoom} = useData();
     return (
         <div
-            className="relative select-none overflow-hidden grid h-dvh place-items-center bg-black  text-white"
+            className="relative select-none cursor-arrow overflow-hidden grid h-dvh place-items-center bg-black  text-white"
         >
             {gameState == "home" && (
                 <button

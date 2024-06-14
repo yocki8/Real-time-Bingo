@@ -22,10 +22,10 @@
 }
 
 .timeout {
-    animation: pulse 15s forwards;
+    animation: loading 15s forwards;
 }
 
-@keyframes pulse {
+@keyframes loading {
     0% {
         width: 0%;
     }
@@ -33,3 +33,21 @@
         width: 100%;
     }
 }
+
+
+.emoji {
+    animation: animate 5s forwards;
+}
+
+@keyframes animate {
+    0% {
+        opacity: 0;
+    }
+    40%,60%{
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+

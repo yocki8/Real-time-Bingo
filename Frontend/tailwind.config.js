@@ -10,6 +10,10 @@ export default {
     darkMode: "selector",
     theme: {
         extend: {
+            cursor: {
+                arrow: "url(arrow-pointer.svg), pointer",
+                notAllowed: "url(not-allowed-pointer.svg), pointer"
+            },
             colors: {
                 lighty: "#F1EFE6",
                 darky: "#36454F",

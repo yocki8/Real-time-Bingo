@@ -34,7 +34,9 @@ export const DataProvider = ({ children }) => {
     const [active, setActive] = useState(false);
     const [myLines, setMyLines] = useState(0);
     const [oppLines, setOppLines] = useState(0);
+    const [emote,setEmote] = useState(null);
     const [remountLoader,setRemountLoader] = useState(0); // just for toggling
+    const [remountEmote,setRemountEmote] = useState(0); // just for toggling
     let countdown = null;
 
     const resetGame = () => {
@@ -44,6 +46,7 @@ export const DataProvider = ({ children }) => {
         setActive(false);
         setMyLines(0);
         setOppLines(0);
+        setEmote(null);
         clearInterval(countdown);
     };
 
@@ -126,6 +129,11 @@ export const DataProvider = ({ children }) => {
             setOppBoard(board);
         });
 
+        socket.on("emote",(oppEmote)=>{
+            setEmote(oppEmote);
+            setRemountEmote((remountEmote)=>!remountEmote);
+        })
+
         return () => {
             socket.disconnect();
         };
@@ -149,6 +157,10 @@ export const DataProvider = ({ children }) => {
         socket.emit("mark_number", num);
     };
 
+    const sendEmote = (emoteClicked)=>{
+        socket.emit("send_emote",emoteClicked);
+    }
+
     return (
         <DataContext.Provider
             value={{
@@ -161,7 +173,10 @@ export const DataProvider = ({ children }) => {
                 myLines,
                 active,
                 oppLines,
-                remountLoader
+                remountLoader,
+                emote,
+                sendEmote,
+                remountEmote
             }}
         >
             {children}

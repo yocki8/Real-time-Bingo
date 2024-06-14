@@ -18,7 +18,11 @@ const connectToSockets = (io) => {
             socket.to(socket.room).emit("mark_number", num);
             io.in(socket.room).emit("restart_countdown");
         });
-
+        
+        socket.on("send_emote",(emote)=>{
+            socket.to(socket.room).emit("emote",emote);
+        })
+        
         socket.on("join_room", async(board) => {
             
             // await delay();
